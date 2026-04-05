@@ -2,7 +2,7 @@ import "dotenv/config";
 import { google } from "googleapis";
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: process.env.GOOGLE_KEYS_PATH || "./keys/keys.json",
+  keyFile: process.env.GOOGLE_KEYS_PATH || "keys.json" || "./keys/keys.json",
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
