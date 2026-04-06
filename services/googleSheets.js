@@ -6,8 +6,6 @@ const auth = new google.auth.GoogleAuth({
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-
 // Вспомогательная функция для получения API
 const getSheets = async () => {
   const client = await auth.getClient();
@@ -31,10 +29,10 @@ const getColumnLetter = (index) => {
 };
 
 // 1. Запись брони в лист "Записи"
-export const appendBooking = async (bookingData) => {
+export const appendBooking = async (sheetId, bookingData) => {
   const sheets = await getSheets();
   await sheets.spreadsheets.values.append({
-    spreadsheetId,
+    spreadsheetId: sheetId,
     range: "Записи!A1:Z1",
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [bookingData] },
@@ -42,10 +40,10 @@ export const appendBooking = async (bookingData) => {
 };
 
 // 2. Получение списка услуг
-export const getServices = async () => {
+export const getServices = async (sheetId) => {
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
+    spreadsheetId: sheetId,
     range: "Услуги!A1:Z100",
   });
   const rows = res.data.values;
@@ -60,10 +58,10 @@ export const getServices = async () => {
 };
 
 // 3. Получение свободных слотов на дату
-export const getAvailableTimesByDate = async (targetDate) => {
+export const getAvailableTimesByDate = async (sheetId, targetDate) => {
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
+    spreadsheetId: sheetId,
     range: "График!A1:Z100",
   });
   const rows = res.data.values;
@@ -84,10 +82,10 @@ export const getAvailableTimesByDate = async (targetDate) => {
 };
 
 // 4. Проверка: свободен ли слот (защита от двойной записи)
-export const isSlotAvailable = async (targetDate, targetTime) => {
+export const isSlotAvailable = async (sheetId, targetDate, targetTime) => {
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
+    spreadsheetId: sheetId,
     range: "График!A1:Z100",
   });
   const rows = res.data.values;
@@ -107,13 +105,14 @@ export const isSlotAvailable = async (targetDate, targetTime) => {
 
 // 5. Обновление статуса в таблице
 export const updateSlotStatus = async (
+  sheetId,
   targetDate,
   targetTime,
   status = "Занято",
 ) => {
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
+    spreadsheetId: sheetId,
     range: "График!A1:Z100",
   });
   const rows = res.data.values;
@@ -129,7 +128,7 @@ export const updateSlotStatus = async (
     const rowNumber = rowIndex + 1;
 
     await sheets.spreadsheets.values.update({
-      spreadsheetId,
+      spreadsheetId: sheetId,
       range: `График!${columnLetter}${rowNumber}`,
       valueInputOption: "USER_ENTERED",
       requestBody: { values: [[status]] },

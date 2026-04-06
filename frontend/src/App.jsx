@@ -42,7 +42,7 @@ function App() {
     setLoading(true);
     try {
       const res = await fetch(
-        `https://googlesheetrecords.onrender.com/bookings/slots?date=${formattedDate}`,
+        `https://googlesheetrecords.onrender.com/barbershop/bookings/slots?date=${formattedDate}`,
       );
       const data = await res.json();
       setAvailableSlots(data.slots || []);
@@ -64,7 +64,7 @@ function App() {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://googlesheetrecords.onrender.com/bookings/add",
+        "https://googlesheetrecords.onrender.com/barbershop/bookings/add",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

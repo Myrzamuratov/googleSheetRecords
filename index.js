@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 // Подключаем наши роуты
-app.use("/bookings", bookingRoutes);
+app.use("/:slug/bookings", bookingRoutes);
 
 const PORT = 3000;
 app.listen(PORT, () => {

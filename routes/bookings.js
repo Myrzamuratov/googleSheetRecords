@@ -1,4 +1,5 @@
 import express from "express";
+import clients from "../config.js";
 import TelegramBot from "node-telegram-bot-api";
 import {
   appendBooking,
@@ -8,21 +9,20 @@ import {
   isSlotAvailable,
 } from "../services/googleSheets.js";
 
-const router = express.Router();
-
-// !Данные по телеграм боту теперь берутся из .env
-const token = process.env.TELEGRAM_BOT_TOKEN;
-const masterChatId = process.env.MASTER_CHAT_ID;
-
-// Инициализируем бота один раз вне роута
-const bot = new TelegramBot(token, { polling: false });
+const router = express.Router({ mergeParams: true });
 
 router.post("/add", async (req, res) => {
+  const { slug } = req.params;
+  const config = clients[slug];
+  if (!config) {
+    return res.status(404).json({ error: "Салон не найден" });
+  }
+
   try {
     const { name, service, date, time, phone, price } = req.body;
 
     // 1. Проверка доступности слота
-    const isFree = await isSlotAvailable(date, time);
+    const isFree = await isSlotAvailable(config.sheetId, date, time);
     if (!isFree) {
       return res.status(409).json({
         error: "Извините, это время уже было занято кем-то другим.",
@@ -30,11 +30,14 @@ router.post("/add", async (req, res) => {
     }
 
     // 2. Обновляем статус в таблице "График"
-    await updateSlotStatus(date, time, "Занято");
+    await updateSlotStatus(config.sheetId, date, time, "Занято");
 
     // 3. Записываем данные клиента в таблицу "Записи"
     const bookingRow = [name, phone, service, date, time, price];
-    await appendBooking(bookingRow);
+    await appendBooking(config.sheetId, bookingRow);
+
+    // Инициализация бота
+    const bot = new TelegramBot(config.botToken, { polling: false });
 
     // 4. Формируем сообщение для мастера
     const message = `
@@ -49,8 +52,10 @@ router.post("/add", async (req, res) => {
 
     // 5. Отправляем уведомление
     bot
-      .sendMessage(masterChatId, message, { parse_mode: "Markdown" })
-      .catch((err) => console.error("Ошибка Telegram бота:", err.message));
+      .sendMessage(config.masterId, message, { parse_mode: "Markdown" })
+      .catch((err) =>
+        console.error(`Ошибка Telegram бота ${slug}:`, err.message),
+      );
 
     res.status(201).json({ message: "Запись успешно создана!" });
   } catch (err) {
@@ -60,6 +65,11 @@ router.post("/add", async (req, res) => {
 });
 
 router.get("/slots", async (req, res) => {
+  const { slug } = req.params;
+  const config = clients[slug];
+  if (!config) {
+    return res.status(404).json({ error: "Салон не найден" });
+  }
   try {
     const selectedDate = req.query.date;
 
@@ -69,8 +79,8 @@ router.get("/slots", async (req, res) => {
 
     // Параллельно получаем слоты и услуги для скорости
     const [availableSlots, services] = await Promise.all([
-      getAvailableTimesByDate(selectedDate),
-      getServices(),
+      getAvailableTimesByDate(config.sheetId, selectedDate),
+      getServices(config.sheetId),
     ]);
 
     res.status(200).json({
