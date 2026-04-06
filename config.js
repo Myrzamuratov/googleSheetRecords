@@ -1,4 +1,4 @@
-require("dotenv").config();
+import "dotenv/config";
 
 const clients = {
   barbershop: {
@@ -13,4 +13,4 @@ const clients = {
   },
 };
 
-module.exports = clients;
+export default clients;
