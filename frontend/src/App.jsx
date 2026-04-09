@@ -62,13 +62,17 @@ function App() {
   // Функция добавления записи
   const handleFinalSubmit = async () => {
     setLoading(true);
+    const cleanBooking = {
+      ...booking,
+      phone: booking.phone.replace(/\s/g, ""),
+    };
     try {
       const response = await fetch(
         "https://googlesheetrecords.onrender.com/barbershop/bookings/add",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(booking),
+          body: JSON.stringify(cleanBooking),
         },
       );
 
@@ -103,9 +107,32 @@ function App() {
       service: "",
       price: "",
     });
-    window.location.reload();
   };
 
+  //! Валидация
+  const validateKGPhone = (phone) => {
+    // Регулярка проверяет форматы: +996700123456, 0700123456, 700123456
+    const regex = /^(\+996|0)?(22\d|50\d|55\d|70\d|77\d|99\d)\d{6}$/;
+    return regex.test(phone.replace(/\s/g, "")); // убираем пробелы перед проверкой
+  };
+
+  // Внутри твоего компонента:
+  const [phoneError, setPhoneError] = useState(false);
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    setBooking({ ...booking, phone: value });
+
+    // Сбрасываем ошибку при наборе, если номер стал валидным
+    if (validateKGPhone(value)) {
+      setPhoneError(false);
+    }
+  };
+
+  const handleBlur = () => {
+    // Проверяем валидность, когда пользователь уводит фокус с поля
+    setPhoneError(!validateKGPhone(booking.phone));
+  };
   return (
     <Container
       maxWidth="xs"
@@ -181,11 +208,22 @@ function App() {
           />
 
           <TextField
+            required
             fullWidth
             label="Номер телефона"
             placeholder="0700 123 456"
             value={booking.phone}
-            onChange={(e) => setBooking({ ...booking, phone: e.target.value })}
+            onChange={handlePhoneChange}
+            onBlur={handleBlur} // Валидация при потере фокуса
+            error={phoneError}
+            helperText={
+              phoneError
+                ? "Введите корректный номер КР (например, 0700 123 456)"
+                : ""
+            }
+            inputProps={{
+              inputMode: "tel",
+            }}
           />
 
           <FormControl fullWidth>
@@ -219,9 +257,12 @@ function App() {
             variant="contained"
             size="large"
             disabled={
-              !booking.name || !booking.phone || !booking.service || loading
+              !booking.name ||
+              !booking.phone ||
+              !booking.service ||
+              phoneError ||
+              loading
             }
-            sx={{ mt: 2, borderRadius: 3, py: 1.5 }}
             onClick={handleFinalSubmit}
           >
             {loading ? (
