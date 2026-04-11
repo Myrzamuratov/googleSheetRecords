@@ -11,7 +11,12 @@ import {
 
 export default function Calendar({ onDataSelect, selectedDate }) {
   const today = new Date();
-  // Состояние для отображения месяца и года в календаре
+  const todayNoTime = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [viewYear] = useState(2026);
 
@@ -30,7 +35,6 @@ export default function Calendar({ onDataSelect, selectedDate }) {
     "Декабрь",
   ];
 
-  // При первой загрузке устанавливаем сегодняшнюю дату как выбранную
   useEffect(() => {
     const d = String(today.getDate()).padStart(2, "0");
     const m = String(today.getMonth() + 1).padStart(2, "0");
@@ -39,10 +43,8 @@ export default function Calendar({ onDataSelect, selectedDate }) {
     }
   }, []);
 
-  // Логика расчета сетки
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
-
   const shift = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
 
   const emptySlots = Array.from({ length: shift });
@@ -50,7 +52,6 @@ export default function Calendar({ onDataSelect, selectedDate }) {
 
   return (
     <Box sx={{ width: "100%", mt: 1 }}>
-      {/* Селект выбора месяца */}
       <FormControl fullWidth size="small" sx={{ mb: 2 }}>
         <InputLabel id="month-select-label">Месяц</InputLabel>
         <Select
@@ -60,25 +61,28 @@ export default function Calendar({ onDataSelect, selectedDate }) {
           onChange={(e) => setViewMonth(Number(e.target.value))}
           sx={{ borderRadius: 2 }}
         >
-          {monthNames.map((name, index) => (
-            <MenuItem key={index} value={index}>
-              {name}
-            </MenuItem>
-          ))}
+          {monthNames.map((name, index) => {
+            if (index < today.getMonth()) {
+              return;
+            } else {
+              return (
+                <MenuItem key={index} value={index}>
+                  {name}
+                </MenuItem>
+              );
+            }
+          })}
         </Select>
       </FormControl>
 
-      {/* Сетка календаря через чистый CSS Grid для стабильности */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
           gap: "4px",
           width: "100%",
-          userSelect: "none",
         }}
       >
-        {/* Заголовки дней недели */}
         {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day) => (
           <Typography
             key={day}
@@ -96,24 +100,28 @@ export default function Calendar({ onDataSelect, selectedDate }) {
           </Typography>
         ))}
 
-        {/* Пустые ячейки (отступы начала месяца) */}
         {emptySlots.map((_, i) => (
           <Box key={`empty-${i}`} />
         ))}
 
-        {/* Числа месяца */}
         {days.map((day) => {
           const formattedDay = String(day).padStart(2, "0");
           const formattedMonth = String(viewMonth + 1).padStart(2, "0");
           const fullDate = `${formattedDay}.${formattedMonth}.26`;
           const isActive = selectedDate === fullDate;
 
+          // --- ЛОГИКА ПРОВЕРКИ ПРОШЕДШЕЙ ДАТЫ ---
+          const dateToCheck = new Date(viewYear, viewMonth, day);
+          const isPast = dateToCheck < todayNoTime;
+          // --------------------------------------
+
           return (
             <Button
               key={day}
               variant={isActive ? "contained" : "text"}
               color={isActive ? "success" : "inherit"}
-              onClick={() => onDataSelect(fullDate)}
+              onClick={() => !isPast && onDataSelect(fullDate)} // Защита от клика
+              disabled={isPast} // Сама кнопка станет серой
               disableElevation
               sx={{
                 minWidth: 0,
@@ -122,6 +130,8 @@ export default function Calendar({ onDataSelect, selectedDate }) {
                 borderRadius: "8px",
                 fontSize: "0.85rem",
                 fontWeight: isActive ? "bold" : "500",
+                // Стиль для прошедших дат (по желанию можно добавить прозрачность)
+                opacity: isPast ? 0.4 : 1,
                 transition: "all 0.2s ease-in-out",
                 "&:hover": {
                   bgcolor: isActive ? "success.dark" : "rgba(0,0,0,0.06)",

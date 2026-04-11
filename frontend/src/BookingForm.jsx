@@ -39,6 +39,17 @@ function BookingForm() {
   const [finished, setIsFinished] = useState(false); // Для включения/выключения модального окна
   const [serverMessage, setServerMessage] = useState(""); // Состояние для текста из ответа
 
+  useEffect(() => {
+    if (services && services.length > 0 && !booking.service) {
+      const firsService = services[0];
+      setBooking((prev) => ({
+        ...prev,
+        service: firsService.Название,
+        price: firsService.Стоимость,
+      }));
+    }
+  }, [services]);
+
   // Функция получения свободных слотов и услуг по дате
   const loadSlots = async (formattedDate) => {
     setLoading(true);
@@ -170,6 +181,7 @@ function BookingForm() {
             <Slots
               slots={availableSlots}
               selectedTime={booking.time}
+              selectedDate={booking.date}
               onTimeSelect={(time) => setBooking({ ...booking, time })}
             />
           )}
@@ -231,6 +243,7 @@ function BookingForm() {
           <FormControl fullWidth>
             <InputLabel>Выберите услугу</InputLabel>
             <Select
+              disabled={services.length === 0}
               label="Выберите услугу"
               value={booking.service}
               onChange={(e) => {
@@ -248,7 +261,7 @@ function BookingForm() {
             >
               {services.map((s, idx) => (
                 <MenuItem key={idx} value={s.Название}>
-                  {s.Название} — {s.Стоимость} сом
+                  {s.Название} {s.Стоимость} сом
                 </MenuItem>
               ))}
             </Select>
