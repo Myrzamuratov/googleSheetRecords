@@ -6,7 +6,7 @@ const clients = {
     masterId: process.env.BARBERSHOP_CHAT_ID,
     sheetId: process.env.BARBERSHOP_SHEET_ID,
   },
-  beauty_salon: {
+  sydykovicn: {
     botToken: process.env.BEAUTY_BOT_TOKEN,
     masterId: process.env.BEAUTY_CHAT_ID,
     sheetId: process.env.BEAUTY_SHEET_ID,

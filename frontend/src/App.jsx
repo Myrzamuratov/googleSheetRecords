@@ -13,7 +13,7 @@ function App() {
         <Route path="/:clientSlug" element={<BookingForm />} />
 
         {/* Если кто-то зайдет просто на корень сайта, кидаем его на барбершоп по умолчанию */}
-        <Route path="/" element={<Navigate to="/barbershop" replace />} />
+        <Route path="/" element={<Navigate to="/sydykovicn" replace />} />
       </Routes>
     </Router>
   );

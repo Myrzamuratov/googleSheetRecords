@@ -120,8 +120,8 @@ export default function Calendar({ onDataSelect, selectedDate }) {
               key={day}
               variant={isActive ? "contained" : "text"}
               color={isActive ? "success" : "inherit"}
-              onClick={() => !isPast && onDataSelect(fullDate)} // Защита от клика
-              disabled={isPast} // Сама кнопка станет серой
+              onClick={() => !isPast && onDataSelect(fullDate)}
+              disabled={isPast}
               disableElevation
               sx={{
                 minWidth: 0,
@@ -130,7 +130,7 @@ export default function Calendar({ onDataSelect, selectedDate }) {
                 borderRadius: "8px",
                 fontSize: "0.85rem",
                 fontWeight: isActive ? "bold" : "500",
-                // Стиль для прошедших дат (по желанию можно добавить прозрачность)
+
                 opacity: isPast ? 0.4 : 1,
                 transition: "all 0.2s ease-in-out",
                 "&:hover": {
